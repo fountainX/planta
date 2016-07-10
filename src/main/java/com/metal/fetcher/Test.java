@@ -106,7 +106,6 @@ public class Test {
    */
   private static void insertBarrage(long subVid, String content) {
 	  Connection conn = null;
-		List<SubVideoTaskBean> beans = null;
 		try {
 			conn = DBHelper.getInstance().getConnection();
 			conn.setAutoCommit(false);
