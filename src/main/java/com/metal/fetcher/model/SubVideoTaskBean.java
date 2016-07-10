@@ -17,6 +17,8 @@ public class SubVideoTaskBean {
 	private int status;
 	private Date add_time;
 	private Date last_update_time;
+	private long tv_id;
+	
 	public long getSub_vid() {
 		return sub_vid;
 	}
@@ -70,6 +72,12 @@ public class SubVideoTaskBean {
 	}
 	public void setLast_update_time(Date last_update_time) {
 		this.last_update_time = last_update_time;
+	}
+	public long getTv_id() {
+		return tv_id;
+	}
+	public void setTv_id(long tv_id) {
+		this.tv_id = tv_id;
 	}
 	@Override
 	public String toString() {

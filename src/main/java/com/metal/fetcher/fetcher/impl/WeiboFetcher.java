@@ -40,7 +40,7 @@ public class WeiboFetcher extends SearchFetcher {
 
 	private static Logger log = LoggerFactory.getLogger(WeiboFetcher.class);
 	
-	private static final String WEIBO_SEARCH_FORMAT = "http://s.weibo.com/weibo/%s";
+	private static final String WEIBO_SEARCH_FORMAT = "http://s.weibo.com/weibo/%s?nodup=1";
 //	private static String WEIBO_SEARCH_FORMAT = "http://www.weibo.cn/search/mblog?hideSearchFrame=&keyword=%s";
 
 	private static final int WEIBO_PAGE_COUNT = Config.getIntProperty("weibo_page_count");
