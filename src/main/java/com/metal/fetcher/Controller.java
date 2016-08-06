@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import com.metal.fetcher.common.Config;
 import com.metal.fetcher.common.QuartzManager;
+import com.metal.fetcher.server.ResourceServer;
 import com.metal.work.impl.FetcherWorkImpl;
 import com.metal.work.impl.ResetTaskImpl;
 import com.metal.work.impl.ResetVideoTaskImpl;
@@ -60,6 +61,11 @@ public class Controller {
 		if(StringUtils.isNotBlank(TASK_CHECK_RESET_SCHEDULE)) {
 			log.info("check-and-reset-task: " + TASK_CHECK_RESET_SCHEDULE);
 			QuartzManager.addJob("check-and-reset-task", ResetTaskImpl.class, TASK_CHECK_RESET_SCHEDULE);
+		}
+		try {
+			ResourceServer.startJetty();
+		} catch (Exception e) {
+			log.error("start jetty failed. ", e);
 		}
 	}
 }

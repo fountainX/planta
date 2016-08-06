@@ -13,7 +13,8 @@ public class CommonResultHandle implements SearchFetchHandle {
 	@Override
 	public void handle(SubTask subTask, String url, String html) {
 		// TODO Auto-generated method stub
-		
+		System.out.println(url);
+//		System.out.println(html);
 	}
 	
 

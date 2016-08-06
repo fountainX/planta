@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -299,6 +300,35 @@ public class HttpHelper {
 		
 		return httpRequest(httpGet, headers, isRedirect, proxy, httpContext);
 	}
+	
+	public HttpResult httpPost(String url, Map<String,String> params, Header[] headers, HttpContext httpContext) {
+		if(StringUtils.isBlank(url)) {
+			return null;	//如果url为空或者null
+		}
+		//创建httpclient请求方式
+		HttpPost httpPost = new HttpPost(url);
+
+		List<NameValuePair> pairs = null;
+        if(params != null && !params.isEmpty()){
+            pairs = new ArrayList<NameValuePair>(params.size());
+            for(Map.Entry<String,String> entry : params.entrySet()){
+                String value = entry.getValue();
+                if(value != null){
+                    pairs.add(new BasicNameValuePair(entry.getKey(),value));
+                }
+            }
+        }
+        if(pairs != null && pairs.size() > 0){
+            try {
+				httpPost.setEntity(new UrlEncodedFormEntity(pairs,"utf8"));
+			} catch (UnsupportedEncodingException e) {
+				log.error("http post builder failed. ", e);
+				return null;
+			}
+        }
+		
+		return httpRequest(httpPost, headers, true, null, httpContext);
+	}
 
 	public HttpResult httpGet(String url, Header[] headers, Map<String, String> cookieConfig, Boolean isRedirect, HttpHost proxy, HttpContext httpContext) {
 		if(StringUtils.isBlank(url)) {
@@ -504,7 +534,7 @@ public class HttpHelper {
 		return headStr;
 	}
 	
-	public void download(String url, Map<String,String> headers, HttpHost httpHost, String file){
+	public void download(String url, Map<String,String> headers, HttpHost httpHost, String file, HttpContext httpContext){
 		
 		if(null==url || "".equals(url)) {
 			return;	//如果url为空或者null
@@ -527,8 +557,12 @@ public class HttpHelper {
 			}
 		}
 		
+		if(httpContext == null) {
+			httpContext = new BasicHttpContext();
+		}
+		
 		try {
-			response = httpClient.execute(httpGet);
+			response = httpClient.execute(httpGet, httpContext);
 			int statusCode = response.getStatusLine().getStatusCode();
 			if(log.isInfoEnabled()){
 				log.info("response code is =>"+statusCode);
