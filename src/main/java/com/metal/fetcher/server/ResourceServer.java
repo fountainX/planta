@@ -188,6 +188,6 @@ public class ResourceServer {
 		String code = request.getParameter("code");
 		boolean isUnFreeze = SogouWeixinFetcher.dama(code);
 		log.info("unfreeze: " + isUnFreeze);
-		response.sendRedirect("dama");
+		response.sendRedirect("check");
 	}
 }

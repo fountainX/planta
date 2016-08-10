@@ -108,6 +108,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 			log.error("the ip is freezed. locatioin: " + articleListResult.getResponse().getFirstHeader("Location").getValue());
 			freezeUrl = url;
 			isBan = true;
+			ArticleTaskMapper.subTaskReset(subTask);
 			return;
 		} else {
 			isBan = false;
@@ -142,6 +143,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 				log.error("the ip is freezed. locatioin: " + articleListResult.getResponse().getFirstHeader("Location").getValue());
 				freezeUrl = url;
 				isBan = true;
+				ArticleTaskMapper.subTaskReset(subTask);
 				return;
 			} else {
 				isBan = false;
@@ -429,9 +431,9 @@ public class SogouWeixinFetcher extends SearchFetcher {
 //		subTask.setUrl("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8");
 //		SearchFetcher fetcher = new SogouWeixinFetcher(subTask, new CommonResultHandle());
 //		new Thread(fetcher).start();
-//		for(int i=0; i<100; i++) {
-//			HttpHelper.getInstance().get("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
-//		}
+		for(int i=0; i<100; i++) {
+			HttpHelper.getInstance().get("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
+		}
 		
 //		unFreeze("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
 //		unFreeze("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");

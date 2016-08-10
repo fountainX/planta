@@ -135,6 +135,10 @@ public class ArticleTaskMapper {
 		}
 	}
 	
+	public static void subTaskReset(SubTask subTask) {
+		DBUtils.update(RESET_SUB_TASK, subTask.getSub_task_id());
+	}
+	
 	public static List<Task> getInitTasks(int limit) {
 		Connection conn = null;
 		List<Task> tasks = null;
