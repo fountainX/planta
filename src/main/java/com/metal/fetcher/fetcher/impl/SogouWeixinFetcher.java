@@ -6,16 +6,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.RedirectLocations;
 import org.apache.http.impl.cookie.BasicClientCookie;
@@ -24,6 +29,7 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.joda.time.DateTime;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -65,7 +71,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 	
 	private static BasicCookieStore cookieStore;
 	
-	public static boolean isBan = false;
+	public static boolean isBan = true; // TODO tmp
 	
 	public static String freezeUrl = null;
 	
@@ -73,11 +79,11 @@ public class SogouWeixinFetcher extends SearchFetcher {
 	
 	public static String DEFAULT_FREEZE_URL = "http://weixin.sogou.com/weixin?type=2&query=%E9%B9%BF%E6%99%97&ie=utf8";
 	
-	private static final int[] sleepTime = {1, 3};
+	private static final int[] sleepTime = {7, 10};
 	
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	
-//	private static final Random RANDOM = new Random();
+	private static final Random RANDOM = new Random();
 	
 	static {
 		readCookieStore();
@@ -139,6 +145,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 //		th1.start();
 //		th1.run(); // 单线程执行。为免被封
 		for(int i=2; i<pageCount+1; i++) { // TODO pageCount
+			Utils.randomSleep(sleepTime[0], sleepTime[1]);
 			url = subTask.getUrl() + "&page=" + i;
 			articleListResult = HttpHelper.getInstance().httpGet(url, null, false, null, httpContext);
 			if(articleListResult.getResponse().getFirstHeader("Location") != null) {
@@ -166,6 +173,50 @@ public class SogouWeixinFetcher extends SearchFetcher {
 		saveCookieStore();
 	}
 
+	private static void httpPvRequest(String url) {
+		if(cookieStore == null) {
+			return;
+		}
+		String uigs_cookie = "";
+		for(Cookie cookie : cookieStore.getCookies()) {
+			if("SUID".equals(cookie.getName()) && ".weixin.sogou.com".equals(cookie.getDomain())) {
+				uigs_cookie = "SUID=" + cookie.getValue() + "&sct=3";
+			}
+		}
+		
+		String uigs_productid = "webapp";
+		String uigs_uuid = String.valueOf(new Date().getTime()) + String.valueOf(Math.abs(RANDOM.nextInt() % 1000));
+		String uigs_version = "v2.0";
+		String uigs_refer = url;
+//		String uigs_cookie = "SUID=950115DF6F1C920A0000000057AB3D7F&sct=3";
+		String uuid = UUID.randomUUID().toString().toLowerCase();
+
+		int start = url.indexOf("query=") + 6;
+		int end = url.indexOf("&", start);
+		
+		String query = url.substring(start, end);
+		String weixintype = "2";
+		String exp_status = "null";
+		String exp_id = "null_0-null_1-null_2-null_3-null_4-null_5-null_6-null_7-null_8-null_9-"; // TODO
+		String exp_id_list = "null";
+		String noresult = "0";
+		String type = "weixin_search_pc";
+		String xy = "1216,650";
+		String uigs_t = String.valueOf(new Date().getTime()) + String.valueOf(Math.abs(RANDOM.nextInt() % 1000));
+		
+		String pvUrl = "http://pb.sogou.com/pv.gif?uigs_productid=" + uigs_productid + "&uigs_uuid=" + uigs_uuid + "&uigs_version=" + uigs_version 
+				+ "&uigs_refer=" + uigs_refer + "&uigs_cookie=" + uigs_cookie + "&uuid=" + uuid + "&query=" + query 
+				+ "&weixintype=" + weixintype + "&exp_status=" + exp_status + "&exp_id=" + exp_id + "&exp_id_list=" + exp_id_list + "&noresult=" + noresult 
+				+ "&type=" + type + "&xy=" + xy + "&uigs_t=" + uigs_t;
+		
+		HttpContext httpContext = new BasicHttpContext();
+		httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+		
+		log.info("pv url: " + pvUrl);
+		
+		HttpHelper.getInstance().httpGet(pvUrl, null, false, null, httpContext);
+	}
+	
 	/**
 	 * 搜索结果列表页是否存在文章
 	 * @param doc
@@ -227,7 +278,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 	 */
 	private void fetcherArticles(List<String> links) {
 		for(String link : links) {
-			Utils.randomSleep(sleepTime[0], sleepTime[1]);
+//			Utils.randomSleep(sleepTime[0], sleepTime[1]);
 			HttpResult articleResult = HttpHelper.getInstance().httpGet(link, null, null, null, null);
 			
 			RedirectLocations locations = (RedirectLocations)articleResult.getContext().getAttribute(HttpClientContext.REDIRECT_LOCATIONS);
@@ -342,6 +393,8 @@ public class SogouWeixinFetcher extends SearchFetcher {
 		params.put("c", postCode);
 		params.put("r", "/" + Utils.getLastPath(freezeUrl));
 		params.put("v", "5");
+		// TODO test
+		log.debug(params.toString());
 		HttpResult result = HttpHelper.getInstance().httpPost("http://weixin.sogou.com/antispider/thank.php", params, null, httpContext);
 		log.info(result.getContent());
 		String content = result.getContent();
@@ -438,22 +491,20 @@ public class SogouWeixinFetcher extends SearchFetcher {
 		HttpContext httpContext = new BasicHttpContext();
 		httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 		log.info("start.........");
-		for(int i=0; i<100; i++) {
+		for(int i=0; i<1000; i++) {
 //			HttpHelper.getInstance().get("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
 			HttpResult result = HttpHelper.getInstance().httpGet(url, null, true, null, httpContext);
+			httpPvRequest(url);
 			RedirectLocations locations = (RedirectLocations)result.getContext().getAttribute(HttpClientContext.REDIRECT_LOCATIONS);
 			if(locations == null || locations.size() <= 0) {
 				log.info("success.");
 			} else {
 				log.warn("freezed!!!");
 			}
-			try {
-				Thread.sleep(7000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			Utils.randomSleep(7, 10);
 		}
+		
+		saveCookieStore();
 		
 //		unFreeze("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
 //		unFreeze("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
