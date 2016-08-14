@@ -71,7 +71,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 	
 	private static BasicCookieStore cookieStore;
 	
-	public static boolean isBan = true; // TODO tmp
+	public static boolean isBan = false;
 	
 	public static String freezeUrl = null;
 	
