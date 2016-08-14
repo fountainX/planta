@@ -30,7 +30,7 @@ public class ArticleTaskMapper {
 	
 	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 
-	private static final String QUERY_TASK_BY_STATUS = "select task_id,key_word,status,start_time,end_time from task where status=? limit ?";
+	private static final String QUERY_TASK_BY_STATUS = "select task_id,key_word,status,start_time,end_time from task where status=? order by end_time limit ?";
 	
 	private static final String QUERY_SUB_TASK_BY_STATUS = "select sub_task_id,task_id,platform,url,status,start_time,end_time from sub_task where status=? limit ?";
 	
@@ -49,6 +49,8 @@ public class ArticleTaskMapper {
 	private static final String INSERT_TASK_ARTICLE = "insert ignore into task_article(task_id,article_id) values(?,?)";
 	
 	private static final String UPDATE_SUB_TASK_STATUS = "update sub_task set status=? where sub_task_id=?";
+	
+	private static final String SUB_TASK_END = "update sub_task set status=?,end_time=now() where sub_task_id=?";
 	
 	private static final String RESET_SUB_TASK = "update sub_task set status=0,start_time=now() where sub_task_id=?";
 	
@@ -96,14 +98,18 @@ public class ArticleTaskMapper {
 		}
 	}
 	
-	public static void subTaskFinish(SubTask subTask) {
+	public static void subTaskFinish(SubTask subTask, boolean success) {
 		Connection conn = null;
 		try {
 			conn = DBHelper.getInstance().getConnection();
 			conn.setAutoCommit(false);
 			QueryRunner qr = new QueryRunner();
 
-			qr.update(conn, UPDATE_SUB_TASK_STATUS, Constants.TASK_STATUS_FINISH, subTask.getSub_task_id());
+			if(success) {
+				qr.update(conn, SUB_TASK_END, Constants.TASK_STATUS_FINISH, subTask.getSub_task_id());
+			} else {
+				qr.update(conn, SUB_TASK_END, Constants.TASK_STATUS_EXSTOP, subTask.getSub_task_id());
+			}
 
 			List<SubTask> subTasks = qr.query(conn, QUERY_SUB_TASK_BY_TASKID, new BeanListHandler<SubTask>(SubTask.class), subTask.getTask_id());
 

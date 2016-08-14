@@ -177,7 +177,7 @@ public class WeiboFetcher extends SearchFetcher {
 			}
 			
 		}
-		ArticleTaskMapper.subTaskFinish(subTask);
+		ArticleTaskMapper.subTaskFinish(subTask, true);
 	}
 	
 	public static void main(String[] args) {

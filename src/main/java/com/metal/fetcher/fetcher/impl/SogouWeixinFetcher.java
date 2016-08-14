@@ -108,7 +108,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 			log.error("the ip is freezed. locatioin: " + articleListResult.getResponse().getFirstHeader("Location").getValue());
 			freezeUrl = url;
 			isBan = true;
-			ArticleTaskMapper.subTaskReset(subTask);
+			ArticleTaskMapper.subTaskFinish(subTask, false);
 			return;
 		} else {
 			isBan = false;
@@ -119,11 +119,13 @@ public class SogouWeixinFetcher extends SearchFetcher {
 		Document doc = Jsoup.parse(html);
 		if(!isExistResult(doc)) {
 			log.warn("search \"keyword\" no result");
+			ArticleTaskMapper.subTaskFinish(subTask, false);
 			return;
 		}
 		int pageCount = getPageCount(doc);
 		if(pageCount <= 0) {
 			log.warn("search \"" + subTask.getUrl() + "\" result has 0 page.");
+			ArticleTaskMapper.subTaskFinish(subTask, false);
 			return;
 		}
 		try {
@@ -143,7 +145,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 				log.error("the ip is freezed. locatioin: " + articleListResult.getResponse().getFirstHeader("Location").getValue());
 				freezeUrl = url;
 				isBan = true;
-				ArticleTaskMapper.subTaskReset(subTask);
+				ArticleTaskMapper.subTaskFinish(subTask, false);
 				return;
 			} else {
 				isBan = false;
@@ -160,7 +162,7 @@ public class SogouWeixinFetcher extends SearchFetcher {
 //			th.start();
 //			th.run();
 		}
-		ArticleTaskMapper.subTaskFinish(subTask);
+		ArticleTaskMapper.subTaskFinish(subTask, true);
 		saveCookieStore();
 	}
 
@@ -431,8 +433,26 @@ public class SogouWeixinFetcher extends SearchFetcher {
 //		subTask.setUrl("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8");
 //		SearchFetcher fetcher = new SogouWeixinFetcher(subTask, new CommonResultHandle());
 //		new Thread(fetcher).start();
+		String url = "http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1";
+		readCookieStore();
+		HttpContext httpContext = new BasicHttpContext();
+		httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+		log.info("start.........");
 		for(int i=0; i<100; i++) {
-			HttpHelper.getInstance().get("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
+//			HttpHelper.getInstance().get("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
+			HttpResult result = HttpHelper.getInstance().httpGet(url, null, true, null, httpContext);
+			RedirectLocations locations = (RedirectLocations)result.getContext().getAttribute(HttpClientContext.REDIRECT_LOCATIONS);
+			if(locations == null || locations.size() <= 0) {
+				log.info("success.");
+			} else {
+				log.warn("freezed!!!");
+			}
+			try {
+				Thread.sleep(7000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 //		unFreeze("http://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E8%B4%BC%E7%8E%8B&ie=utf8&page=1");
